@@ -5,10 +5,11 @@ use crate::walker;
 use specs::{Dispatcher, DispatcherBuilder, World};
 
 use crate::aggregate;
-use crate::integrator;
-use crate::render;
-use crate::output;
 use crate::globals;
+use crate::integrator;
+use crate::neighborhood::Neighborhood;
+use crate::output;
+use crate::render;
 
 /// Registers all components used by the modules of the program.
 pub fn register_components(world: &mut World) {
@@ -17,9 +18,17 @@ pub fn register_components(world: &mut World) {
 
 pub fn register_resources(world: &mut World) {
     world.insert(integrator::Step { n: 0 });
-    world.insert(integrator::Timestep {delta: globals::TIMESTEP});
+    world.insert(integrator::Timestep {
+        delta: globals::TIMESTEP,
+    });
     world.insert(render::FrameRate::new());
-    world.insert(walker::Counter {fix: 0, tot: 0});
+    world.insert(walker::Counter { fix: 0, tot: 0 });
+    world.insert(Neighborhood::new_from_field(
+        globals::WIDTH,
+        globals::HEIGHT,
+        globals::NEIGH_SIZE,
+        globals::NEIGH_SIZE,
+    ));
 }
 
 #[derive(Default)]
@@ -40,8 +49,7 @@ impl MyDispatcherBuilder {
         );
         self.builder
             .add(aggregate::AggregateSystem, "aggregate", &[]);
-        self.builder
-            .add(walker::CounterSystem, "counter", &[]);
+        self.builder.add(walker::CounterSystem, "counter", &[]);
         self.builder
             .add(output::console::OutputPositionSystem, "output", &[]);
     }

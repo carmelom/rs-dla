@@ -1,9 +1,11 @@
 use crate::globals;
 use crate::walker::{Force, Position, Velocity, Mobile};
+use crate::neighborhood::Neighborhood;
 use nalgebra::Vector2;
 use rand::{thread_rng, Rng};
 use rayon::prelude::*;
-use specs::{ParJoin, ReadExpect, System, WriteExpect, ReadStorage, WriteStorage};
+use specs::{ParJoin, ReadExpect, System, WriteExpect, ReadStorage, WriteStorage, Entities};
+use std::sync::Mutex;
 
 const PI: f32 = std::f32::consts::PI;
 
@@ -21,51 +23,40 @@ pub struct VerletUpdatePositionSystem;
 
 impl<'a> System<'a> for VerletUpdatePositionSystem {
     type SystemData = (
+        Entities<'a>,
         ReadExpect<'a, Timestep>,
         WriteExpect<'a, Step>,
         ReadStorage<'a, Mobile>,
         WriteStorage<'a, Force>,
         WriteStorage<'a, Velocity>,
         WriteStorage<'a, Position>,
+        WriteExpect<'a, Neighborhood>,
     );
 
-    fn run(&mut self, (t, mut step, mobile, mut force, mut velocity, mut position): Self::SystemData) {
+    fn run(&mut self, (ents, t, mut step, mobile, mut force, mut velocity, mut position, neighborhood): Self::SystemData) {
         step.n += 1;
 
-        (&mut force, &mut velocity, &mut position, &mobile)
+        let nh = Mutex::new(neighborhood);
+
+        (&ents, &mut force, &mut velocity, &mut position, &mobile)
             .par_join()
-            .for_each(|(force, vel, pos, _)| {
+            .for_each(|(ent, force, vel, pos, _)| {
+                let mut nh = nh.lock().unwrap();
+                
+                // check nh index before updating
+                let (old_nx, old_ny) = nh.get_area_xy(pos.pos);
+                
                 verlet_integrator(force, vel, pos, t.delta);
                 pos.pos[0] = modulus(pos.pos[0], globals::WIDTH);
                 pos.pos[1] = modulus(pos.pos[1], globals::HEIGHT);
+
+                let (new_nx, new_ny) = nh.get_area_xy(pos.pos);
+				if old_nx != new_nx || old_ny != new_ny {
+					nh.remove(old_nx, old_ny, ent.id());
+					nh.insert(new_nx, new_ny, ent.id());
+				}
             });
     }
-}
-
-pub struct RandomUpdatePositionSystem;
-
-impl<'a> System<'a> for RandomUpdatePositionSystem {
-    type SystemData = (
-        WriteExpect<'a, Step>,
-        ReadStorage<'a, Mobile>,
-        WriteStorage<'a, Position>,
-    );
-
-    fn run(&mut self, (mut step, mobile, mut position): Self::SystemData) {
-        step.n += 1;
-
-        (&mut position, &mobile)
-            .par_join()
-            .for_each(|(pos, _)| {
-                random_step(pos);
-                pos.pos[0] = modulus(pos.pos[0], globals::WIDTH);
-                pos.pos[1] = modulus(pos.pos[1], globals::HEIGHT);
-            })
-    }
-}
-
-fn random_step(pos: &mut Position) {
-    pos.pos += random_vec2(globals::STEP);
 }
 
 fn verlet_integrator(force: &mut Force, vel: &mut Velocity, pos: &mut Position, dt: f32) {

@@ -9,6 +9,7 @@ use specs::prelude::*;
 
 mod ecs;
 mod globals;
+mod neighborhood;
 mod integrator;
 mod aggregate;
 mod output;
