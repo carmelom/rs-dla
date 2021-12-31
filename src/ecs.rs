@@ -43,7 +43,7 @@ impl MyDispatcherBuilder {
         self.builder
             .add(walker::CounterSystem, "counter", &[]);
         self.builder
-            .add(output::OutputPositionSystem, "output", &[]);
+            .add(output::console::OutputPositionSystem, "output", &[]);
     }
 
     pub fn build(mut self) -> DispatcherBuilder<'static, 'static> {

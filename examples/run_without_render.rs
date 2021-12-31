@@ -6,6 +6,7 @@ use specs::prelude::*;
 use lib::ecs;
 use lib::walker;
 use lib::globals;
+use lib::output::file;
 
 fn main() {
     let mut world = World::new();
@@ -24,6 +25,7 @@ fn main() {
         if counter.fix > 90 * counter.tot / 100 {
             break;
         }
+    let mut writer_system = file::new::<walker::Position, file::Text>("pos.txt".to_string());
+    writer_system.run_now(&world);
     }
-    
 }

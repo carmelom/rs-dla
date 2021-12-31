@@ -5,7 +5,7 @@ use specs::prelude::*;
 
 use lib::ecs;
 use lib::walker::Position;
-use lib::output::OutputPositionSystem;
+use lib::output::console::OutputPositionSystem;
 
 fn main() {
     let mut world = World::new();

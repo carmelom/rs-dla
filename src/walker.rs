@@ -6,7 +6,7 @@ use specs::{Component, NullStorage, VecStorage, World, WorldExt};
 use std::fmt;
 
 // Position
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 #[storage(VecStorage)]
 pub struct Position {
     pub pos: Vector2<f32>,
@@ -30,7 +30,7 @@ impl fmt::Display for Position {
 }
 
 // Velocity
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 #[storage(VecStorage)]
 pub struct Velocity {
     pub vel: Vector2<f32>,
