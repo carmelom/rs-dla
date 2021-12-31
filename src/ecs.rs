@@ -19,6 +19,7 @@ pub fn register_resources(world: &mut World) {
     world.insert(integrator::Step { n: 0 });
     world.insert(integrator::Timestep {delta: globals::TIMESTEP});
     world.insert(render::FrameRate::new());
+    world.insert(walker::Counter {fix: 0, tot: 0});
 }
 
 #[derive(Default)]
@@ -39,6 +40,8 @@ impl MyDispatcherBuilder {
         );
         self.builder
             .add(aggregate::AggregateSystem, "aggregate", &[]);
+        self.builder
+            .add(walker::CounterSystem, "counter", &[]);
         self.builder
             .add(output::OutputPositionSystem, "output", &[]);
     }

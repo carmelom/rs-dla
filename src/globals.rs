@@ -1,7 +1,7 @@
 pub const WIDTH: f32 = 800.0;
 pub const HEIGHT: f32 = 600.0;
 
-pub const NUM_WALKERS: i32 = 5000;
+pub const NUM_WALKERS: u32 = 5000;
 
 pub const RADIUS: f32 = 4.0;
 

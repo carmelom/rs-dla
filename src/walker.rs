@@ -1,12 +1,15 @@
-use specs::{Component, VecStorage, NullStorage, World, WorldExt};
+use crate::globals;
 use nalgebra::Vector2;
+use rand::{thread_rng, Rng};
+use specs::prelude::*;
+use specs::{Component, NullStorage, VecStorage, World, WorldExt};
 use std::fmt;
 
 // Position
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct Position {
-    pub pos: Vector2<f32>
+    pub pos: Vector2<f32>,
 }
 impl Default for Position {
     fn default() -> Self {
@@ -30,7 +33,7 @@ impl fmt::Display for Position {
 #[derive(Component, Debug)]
 #[storage(VecStorage)]
 pub struct Velocity {
-    pub vel: Vector2<f32>
+    pub vel: Vector2<f32>,
 }
 impl Default for Velocity {
     fn default() -> Self {
@@ -59,7 +62,10 @@ pub struct Force {
 }
 impl Default for Force {
     fn default() -> Self {
-        Self {force: Vector2::new(0.0, 0.0), old_force: Vector2::new(0.0, 0.0)}
+        Self {
+            force: Vector2::new(0.0, 0.0),
+            old_force: Vector2::new(0.0, 0.0),
+        }
     }
 }
 
@@ -73,4 +79,49 @@ pub fn register_components(world: &mut World) {
     world.register::<Velocity>();
     world.register::<Force>();
     world.register::<Mobile>();
+}
+
+pub fn spawn_walkers(world: &mut World, num_walkers: u32) {
+    let mut rng = thread_rng();
+    for _j in 1..num_walkers {
+        world
+            .create_entity()
+            .with(Position::new(
+                rng.gen::<f32>() * globals::WIDTH,
+                rng.gen::<f32>() * globals::HEIGHT,
+            ))
+            .with(Velocity::new(0.0, 0.0))
+            .with(Force::default())
+            .with(Mobile)
+            .build();
+    }
+    world
+        .create_entity()
+        .with(Position::new(globals::WIDTH / 2.0, globals::HEIGHT / 2.0))
+        .with(Velocity::new(0.0, 0.0))
+        .with(Force::default())
+        .build();
+    let mut counter = world.write_resource::<Counter>();
+    counter.tot = num_walkers;
+}
+
+// Count aggregated walkers
+pub struct Counter {
+    pub fix: u32,
+    pub tot: u32,
+}
+
+pub struct CounterSystem;
+
+impl<'a> System<'a> for CounterSystem {
+    type SystemData = (
+        Entities<'a>,
+        ReadStorage<'a, Mobile>,
+        WriteExpect<'a, Counter>,
+    );
+
+    fn run(&mut self, (ent, mobile, mut counter): Self::SystemData) {
+        let fix_walkers = (&ent, !&mobile).join().count();
+        counter.fix = fix_walkers as u32;
+    }
 }

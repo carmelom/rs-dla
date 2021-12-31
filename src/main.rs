@@ -5,7 +5,6 @@
 #![allow(dead_code)]
 
 use ggez::{conf, event, graphics, Context, ContextBuilder, GameError, GameResult};
-use rand::{thread_rng, Rng};
 use specs::prelude::*;
 
 mod ecs;
@@ -17,7 +16,6 @@ mod render;
 mod walker;
 
 use render::{RenderSystem, FrameRateLoggerSystem};
-use walker::{Force, Mobile, Position, Velocity};
 
 const SCREEN_WIDTH: f32 = globals::WIDTH;
 const SCREEN_HEIGHT: f32 = globals::HEIGHT;
@@ -34,28 +32,8 @@ impl State {
 
         let mut dispatcher = ecs::create_dispatcher();
         dispatcher.setup(&mut world);
-        let mut rng = thread_rng();
-        for _j in 1..globals::NUM_WALKERS {
-            world
-                .create_entity()
-                .with(Position::new(
-                    rng.gen::<f32>() * globals::WIDTH,
-                    rng.gen::<f32>() * globals::HEIGHT,
-                ))
-                .with(Velocity::new(0.0, 0.0))
-                .with(Force::default())
-                .with(Mobile)
-                .build();
-        }
-        world
-            .create_entity()
-            .with(Position::new(
-                globals::WIDTH / 2.0,
-                globals::HEIGHT / 2.0,
-            ))
-            .with(Velocity::new(0.0, 0.0))
-            .with(Force::default())
-            .build();
+
+        walker::spawn_walkers(&mut world, globals::NUM_WALKERS);
 
 
         Ok(Self { world, dispatcher })
