@@ -52,6 +52,7 @@ impl<'a> System<'a> for VerletUpdatePositionSystem {
 
                 let (new_nx, new_ny) = nh.get_area_xy(pos.pos);
 				if old_nx != new_nx || old_ny != new_ny {
+                    // println!("Moved ent {} from ({}, {}), to ({}, {})", ent.id(), old_nx, old_ny, new_nx, new_ny);
 					nh.remove(old_nx, old_ny, ent.id());
 					nh.insert(new_nx, new_ny, ent.id());
 				}

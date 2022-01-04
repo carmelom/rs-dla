@@ -1,7 +1,7 @@
 use crate::globals;
 use crate::walker::{Mobile, Position};
 use crate::neighborhood::Neighborhood;
-use specs::{Entities, LazyUpdate, Read, ReadStorage, System, WriteExpect};
+use specs::{Entities, LazyUpdate, Read, ReadStorage, System, WriteExpect, Join};
 use std::sync::Mutex;
 
 pub struct AggregateSystem;
@@ -30,14 +30,21 @@ impl<'a> System<'a> for AggregateSystem {
         (&position, !&mobile).par_join().for_each(|(fix, _)| {
             let mut nh = nh.lock().unwrap();
             let bitset = nh.get_neighbours_in_area(fix.pos);
+            struct Count {
+                n: i32
+            }
+            let count = Mutex::new(Count {n: 0});
             (&entities, &position, &mobile, bitset)
-                .par_join()
+                .join()
                 .for_each(|(ent, mob, _, _)| {
+                    let mut count = count.lock().unwrap();
+                    count.n += 1;
                     let distance = (fix.pos - mob.pos).norm();
                     if distance <= globals::RADIUS {
                         updater.remove::<Mobile>(ent);
                     }
-                })
+                });
+            println!("Counted {} neighbours", count.lock().unwrap().n);
         })
     }
 }

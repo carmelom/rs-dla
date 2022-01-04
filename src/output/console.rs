@@ -12,7 +12,7 @@ impl<'a> System<'a> for OutputPositionSystem {
 
     fn run(&mut self, (step, counter): Self::SystemData) {
         
-        if step.n % 100 == 0 {
+        if step.n % 1 == 0 {
             println!("Step {}, {}/{} walkers in the tree", step.n, counter.fix, counter.tot);
         }
     }

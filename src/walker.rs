@@ -1,8 +1,9 @@
 use crate::globals;
+use crate::neighborhood::Neighborhood;
 use nalgebra::Vector2;
 use rand::{thread_rng, Rng};
 use specs::prelude::*;
-use specs::{Component, NullStorage, VecStorage, World, WorldExt};
+use specs::{Component, Entities, Join, NullStorage, VecStorage, World, WorldExt, WriteExpect};
 use std::fmt;
 
 // Position
@@ -101,6 +102,20 @@ pub fn spawn_walkers(world: &mut World, num_walkers: u32) {
         .with(Velocity::new(0.0, 0.0))
         .with(Force::default())
         .build();
+
+    // one-time system, add entities to the neighborhood
+    world.exec(
+        |(ent, pos, mut nh): (
+            Entities,
+            ReadStorage<Position>,
+            WriteExpect<Neighborhood>,
+        )| {
+            for (ent, pos) in (&ent, &pos).join() {
+                let (nx, ny) = nh.get_area_xy(pos.pos);
+                nh.insert(nx, ny, ent.id());
+            }
+        },
+    );
     let mut counter = world.write_resource::<Counter>();
     counter.tot = num_walkers;
 }
