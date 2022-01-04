@@ -40,7 +40,7 @@ impl<'a> System<'a> for AggregateSystem {
                     let mut count = count.lock().unwrap();
                     count.n += 1;
                     let distance = (fix.pos - mob.pos).norm();
-                    if distance <= globals::RADIUS {
+                    if distance <= 2.0 * globals::RADIUS {
                         updater.remove::<Mobile>(ent);
                     }
                 });
